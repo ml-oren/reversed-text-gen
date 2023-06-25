@@ -48,4 +48,4 @@ for bart_layer, roberta_layer in zip(bart.model.decoder.layers, pretrained_rober
 
 bart.model.shared = pretrained_roberta.embeddings.word_embeddings
 
-bart.save_pretrained("./models/pretrained_bart_from_roberta_BBBBBBBBBBBBBB")
+bart.save_pretrained("./models/pretrained_bart_from_roberta")
