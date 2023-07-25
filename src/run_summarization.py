@@ -55,17 +55,6 @@ from modeling_bart import BartForConditionalGeneration
 
 
 
-# from venv.bin import wandb
-
-# run = wandb.init(
-#     # Set the project where this run will be logged
-#     project="finetuning-bart-from-roberta-arxiv-summarization-",
-#     # Track hyperparameters and run metadata
-#     # config={
-#     #     "learning_rate": 0.01,
-#     #     "epochs": 10,
-#     # }
-# )
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 # check_min_version("4.31.0.dev0")
 
