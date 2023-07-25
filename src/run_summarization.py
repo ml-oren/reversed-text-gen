@@ -36,7 +36,6 @@ from transformers import (
     AutoConfig,
     AutoModelForSeq2SeqLM,
     AutoTokenizer,
-    DataCollatorForSeq2Seq,
     HfArgumentParser,
     MBart50Tokenizer,
     MBart50TokenizerFast,
@@ -50,7 +49,21 @@ from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils import check_min_version, is_offline_mode, send_example_telemetry
 from transformers.utils.versions import require_version
 
+from transformers_changed_files.data_collator import DataCollatorForSeq2Seq
 
+
+
+# from venv.bin import wandb
+
+# run = wandb.init(
+#     # Set the project where this run will be logged
+#     project="finetuning-bart-from-roberta-arxiv-summarization-",
+#     # Track hyperparameters and run metadata
+#     # config={
+#     #     "learning_rate": 0.01,
+#     #     "epochs": 10,
+#     # }
+# )
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 # check_min_version("4.31.0.dev0")
 
@@ -614,6 +627,7 @@ def main():
         model=model,
         label_pad_token_id=label_pad_token_id,
         pad_to_multiple_of=8 if training_args.fp16 else None,
+        reversed_labels=True,
     )
 
     # Metric
