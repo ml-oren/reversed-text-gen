@@ -264,6 +264,14 @@ class DataTrainingArguments:
             )
         },
     )
+    reversed: bool = field(
+        default=False,
+        metadata={
+            "help": (
+                "reversed the output (labels) of the data"
+            )
+        },
+    )
 
     def __post_init__(self):
         if (
@@ -624,13 +632,22 @@ def main():
 
     # Data collator
     label_pad_token_id = -100 if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id
-    data_collator = DataCollatorForSeq2Seq(
-        tokenizer,
-        model=model,
-        label_pad_token_id=label_pad_token_id,
-        pad_to_multiple_of=8 if training_args.fp16 else None,
-        reversed_labels=True,
-    )
+    if data_args.reversed:
+        data_collator = DataCollatorForSeq2Seq(
+            tokenizer,
+            model=model,
+            label_pad_token_id=label_pad_token_id,
+            pad_to_multiple_of=8 if training_args.fp16 else None,
+            reversed_labels=True,
+        )
+    else:
+        data_collator = DataCollatorForSeq2Seq(
+            tokenizer,
+            model=model,
+            label_pad_token_id=label_pad_token_id,
+            pad_to_multiple_of=8 if training_args.fp16 else None,
+            reversed_labels=False,
+        )
 
     # Metric
     metric = evaluate.load("rouge")
