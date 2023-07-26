@@ -138,7 +138,7 @@ class BartLearnedPositionalEmbedding(nn.Embedding):
                 past_key_values_length + seq_len - 1,
                 past_key_values_length - 1,
                 -1,
-                dtype=self.weight.dtype,
+                dtype=torch.long,
                 device=self.weight.device,
             )
         else:

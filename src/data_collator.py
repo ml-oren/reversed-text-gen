@@ -582,6 +582,8 @@ class DataCollatorForSeq2Seq:
                 )
 
             padding_side = self.tokenizer.padding_side
+            if self.reversed_labels:
+                padding_side = "left"
             for feature in features:
                 remainder = [self.label_pad_token_id] * (max_label_length - len(feature["labels"]))
                 if isinstance(feature["labels"], list):
