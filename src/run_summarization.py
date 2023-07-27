@@ -51,6 +51,7 @@ from transformers.utils.versions import require_version
 
 from data_collator import DataCollatorForSeq2Seq
 # import our modified model
+
 # from modeling_bart import BartForConditionalGeneration
 
 
@@ -280,6 +281,14 @@ class DataTrainingArguments:
             )
         },
     )
+    reverse_positional_encoding_modeling_bart: bool = field(
+        default=False,
+        metadata={
+            "help": (
+                "change_positional_encoding_modeling_bart"
+            )
+        },
+    )
 
 
     def __post_init__(self):
@@ -448,24 +457,25 @@ def main():
         revision=model_args.model_revision,
         use_auth_token=True if model_args.use_auth_token else None,
     )
-    # if config.model_type == "bart":
-    #     model = BartForConditionalGeneration.from_pretrained(
-    #         model_args.model_name_or_path,
-    #         from_tf=bool(".ckpt" in model_args.model_name_or_path),
-    #         config=config,
-    #         cache_dir=model_args.cache_dir,
-    #         revision=model_args.model_revision,
-    #         use_auth_token=True if model_args.use_auth_token else None,
-    #     )
-    # else:
-    model = AutoModelForSeq2SeqLM.from_pretrained(
-        model_args.model_name_or_path,
-        from_tf=bool(".ckpt" in model_args.model_name_or_path),
-        config=config,
-        cache_dir=model_args.cache_dir,
-        revision=model_args.model_revision,
-        use_auth_token=True if model_args.use_auth_token else None,
-    )
+    if config.model_type == "bart" and data_args.reverse_positional_encoding_modeling_bart:
+        from modeling_bart import BartForConditionalGeneration
+        model = BartForConditionalGeneration.from_pretrained(
+            model_args.model_name_or_path,
+            from_tf=bool(".ckpt" in model_args.model_name_or_path),
+            config=config,
+            cache_dir=model_args.cache_dir,
+            revision=model_args.model_revision,
+            use_auth_token=True if model_args.use_auth_token else None,
+        )
+    else:
+        model = AutoModelForSeq2SeqLM.from_pretrained(
+            model_args.model_name_or_path,
+            from_tf=bool(".ckpt" in model_args.model_name_or_path),
+            config=config,
+            cache_dir=model_args.cache_dir,
+            revision=model_args.model_revision,
+            use_auth_token=True if model_args.use_auth_token else None,
+        )
 
 
     # We resize the embeddings only when necessary to avoid index errors. If you are creating a model from scratch
