@@ -2,8 +2,8 @@ from transformers import BartConfig, BartForConditionalGeneration
 from transformers import RobertaModel
 import torch
 
-REVERSED_MODEL = True
-OUTPUT_DIR = "./models/pretrained_bart_from_roberta-090723-reversed"
+REVERSED_MODEL = False
+OUTPUT_DIR = "/cs/labs/roys/matanel.oren/ANLP/reversed-text-gen/models/pretrained_bart_from_roberta-300723-roberta-encoder-position-embeds"
 
 bart_config = BartConfig(
     vocab_size=50265,
@@ -34,7 +34,7 @@ for bart_layer, roberta_layer in zip(bart.model.encoder.layers, pretrained_rober
     bart_layer.final_layer_norm = roberta_layer.output.LayerNorm
 
 bart.model.decoder.embed_tokens = pretrained_roberta.embeddings.word_embeddings
-bart.model.decoder.embed_positions = pretrained_roberta.embeddings.position_embeddings
+# bart.model.decoder.embed_positions = pretrained_roberta.embeddings.position_embeddings
 for bart_layer, roberta_layer in zip(bart.model.decoder.layers, pretrained_roberta.encoder.layer):
     bart_layer.self_attn.k_proj = roberta_layer.attention.self.key
     bart_layer.self_attn.v_proj = roberta_layer.attention.self.value

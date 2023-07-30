@@ -36,6 +36,7 @@ from transformers import (
     AutoConfig,
     AutoModelForSeq2SeqLM,
     AutoTokenizer,
+    DataCollatorForSeq2Seq,
     HfArgumentParser,
     MBart50Tokenizer,
     MBart50TokenizerFast,
@@ -48,12 +49,6 @@ from transformers import (
 from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils import check_min_version, is_offline_mode, send_example_telemetry
 from transformers.utils.versions import require_version
-
-from data_collator import DataCollatorForSeq2Seq
-# import our modified model
-
-# from modeling_bart import BartForConditionalGeneration
-
 
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
@@ -265,31 +260,6 @@ class DataTrainingArguments:
             )
         },
     )
-    reversed_and_keep_padding_right: bool = field(
-        default=False,
-        metadata={
-            "help": (
-                "reversed the output (labels) of the data"
-            )
-        },
-    )
-    reversed_labels: bool = field(
-        default=False,
-        metadata={
-            "help": (
-                "reversed the output (labels) of the data"
-            )
-        },
-    )
-    reverse_positional_encoding_modeling_bart: bool = field(
-        default=False,
-        metadata={
-            "help": (
-                "change_positional_encoding_modeling_bart"
-            )
-        },
-    )
-
 
     def __post_init__(self):
         if (
@@ -457,26 +427,14 @@ def main():
         revision=model_args.model_revision,
         use_auth_token=True if model_args.use_auth_token else None,
     )
-    if config.model_type == "bart" and data_args.reverse_positional_encoding_modeling_bart:
-        from modeling_bart import BartForConditionalGeneration
-        model = BartForConditionalGeneration.from_pretrained(
-            model_args.model_name_or_path,
-            from_tf=bool(".ckpt" in model_args.model_name_or_path),
-            config=config,
-            cache_dir=model_args.cache_dir,
-            revision=model_args.model_revision,
-            use_auth_token=True if model_args.use_auth_token else None,
-        )
-    else:
-        model = AutoModelForSeq2SeqLM.from_pretrained(
-            model_args.model_name_or_path,
-            from_tf=bool(".ckpt" in model_args.model_name_or_path),
-            config=config,
-            cache_dir=model_args.cache_dir,
-            revision=model_args.model_revision,
-            use_auth_token=True if model_args.use_auth_token else None,
-        )
-
+    model = AutoModelForSeq2SeqLM.from_pretrained(
+        model_args.model_name_or_path,
+        from_tf=bool(".ckpt" in model_args.model_name_or_path),
+        config=config,
+        cache_dir=model_args.cache_dir,
+        revision=model_args.model_revision,
+        use_auth_token=True if model_args.use_auth_token else None,
+    )
 
     # We resize the embeddings only when necessary to avoid index errors. If you are creating a model from scratch
     # on a small vocab and want a smaller embedding size, remove this test.
@@ -651,23 +609,12 @@ def main():
 
     # Data collator
     label_pad_token_id = -100 if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id
-    if data_args.reversed_labels or data_args.reversed_and_keep_padding_right:
-        data_collator = DataCollatorForSeq2Seq(
-            tokenizer,
-            model=model,
-            label_pad_token_id=label_pad_token_id,
-            pad_to_multiple_of=8 if training_args.fp16 else None,
-            reversed_labels=True,
-            reversed_and_keep_padding_right=data_args.reversed_and_keep_padding_right
-        )
-    else:
-        data_collator = DataCollatorForSeq2Seq(
-            tokenizer,
-            model=model,
-            label_pad_token_id=label_pad_token_id,
-            pad_to_multiple_of=8 if training_args.fp16 else None,
-            reversed_labels=False,
-        )
+    data_collator = DataCollatorForSeq2Seq(
+        tokenizer,
+        model=model,
+        label_pad_token_id=label_pad_token_id,
+        pad_to_multiple_of=8 if training_args.fp16 else None,
+    )
 
     # Metric
     metric = evaluate.load("rouge")
@@ -710,6 +657,9 @@ def main():
     training_args.generation_num_beams = (
         data_args.num_beams if data_args.num_beams is not None else training_args.generation_num_beams
     )
+
+    import wandb
+    wandb.init(entity="hrizel", project="reversed-text-gen", name=training_args.run_name)
 
     # Initialize our Trainer
     trainer = Seq2SeqTrainer(
