@@ -561,7 +561,8 @@ class DataCollatorForSeq2Seq:
     label_pad_token_id: int = -100
     return_tensors: str = "pt"
     reversed_labels: bool = False
-    reversed_and_keep_padding_right: bool = False
+    padding_left: bool = False
+    reversed_start_end_token: bool = False
 
     def __call__(self, features, return_tensors=None):
         if return_tensors is None:
@@ -572,6 +573,8 @@ class DataCollatorForSeq2Seq:
         if self.reversed_labels:
             for feature in features:
                 feature["labels"].reverse()
+                if not self.reversed_start_end_token:
+                    feature["labels"][0], feature["labels"][-1] = feature["labels"][-1], feature["labels"][0]
 
         if labels is not None:
             max_label_length = max(len(l) for l in labels)
@@ -583,7 +586,7 @@ class DataCollatorForSeq2Seq:
                 )
 
             padding_side = self.tokenizer.padding_side
-            if not self.reversed_and_keep_padding_right:
+            if self.padding_left:
                 padding_side = "left"
             for feature in features:
                 remainder = [self.label_pad_token_id] * (max_label_length - len(feature["labels"]))
