@@ -265,15 +265,15 @@ class DataTrainingArguments:
             )
         },
     )
-    reversed: bool = field(
+    reversed_and_keep_padding_right: bool = field(
         default=False,
         metadata={
             "help": (
                 "reversed the output (labels) of the data"
             )
         },
-    ),
-    reversed_and_keep_padding_right: bool = field(
+    )
+    reversed_labels: bool = field(
         default=False,
         metadata={
             "help": (
@@ -651,7 +651,7 @@ def main():
 
     # Data collator
     label_pad_token_id = -100 if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id
-    if data_args.reversed or data_args.reversed_and_keep_padding_right:
+    if data_args.reversed_labels or data_args.reversed_and_keep_padding_right:
         data_collator = DataCollatorForSeq2Seq(
             tokenizer,
             model=model,
