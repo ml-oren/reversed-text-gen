@@ -50,6 +50,7 @@ from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils import check_min_version, is_offline_mode, send_example_telemetry
 from transformers.utils.versions import require_version
 
+from data_collator import DataCollatorForSeq2Seq
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 # check_min_version("4.31.0.dev0")
@@ -257,6 +258,14 @@ class DataTrainingArguments:
                 "The token to force as the first generated token after the decoder_start_token_id."
                 "Useful for multilingual models like mBART where the first generated token"
                 "needs to be the target language token (Usually it is the target language token)"
+            )
+        },
+    )
+    reversed_labels: bool = field(
+        default=False,
+        metadata={
+            "help": (
+                "Whether to reverse the label loss calculation or not."
             )
         },
     )
@@ -609,12 +618,21 @@ def main():
 
     # Data collator
     label_pad_token_id = -100 if data_args.ignore_pad_token_for_loss else tokenizer.pad_token_id
-    data_collator = DataCollatorForSeq2Seq(
-        tokenizer,
-        model=model,
-        label_pad_token_id=label_pad_token_id,
-        pad_to_multiple_of=8 if training_args.fp16 else None,
-    )
+    if data_args.reversed_labels:
+        data_collator = DataCollatorForSeq2Seq(
+            tokenizer,
+            model=model,
+            label_pad_token_id=label_pad_token_id,
+            pad_to_multiple_of=8 if training_args.fp16 else None,
+            reversed_labels = True
+        )
+    else:
+        data_collator = DataCollatorForSeq2Seq(
+            tokenizer,
+            model=model,
+            label_pad_token_id=label_pad_token_id,
+            pad_to_multiple_of=8 if training_args.fp16 else None,
+        )
 
     # Metric
     metric = evaluate.load("rouge")
